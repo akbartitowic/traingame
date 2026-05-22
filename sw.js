@@ -3,7 +3,7 @@
  * Caches all assets for offline play. No server needed.
  */
 
-const CACHE_NAME = 'choo-choo-v3';
+const CACHE_NAME = 'choo-choo-v4';
 
 /** All files to cache for offline play. */
 const ASSETS_TO_CACHE = [

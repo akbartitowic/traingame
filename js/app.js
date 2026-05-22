@@ -627,14 +627,24 @@ function setupUIHandlers() {
 
   // Quit to menu
   document.getElementById('btn-quit')?.addEventListener('click', () => {
-    engine.audio.playButton();
-    const modal = document.getElementById('pause-modal');
-    if (modal) {
-      modal.classList.remove('visible');
-      modal.classList.add('hidden');
-    }
-    engine.screens.goTo('title');
+    engine.audio.playClick();
+    document.getElementById('pause-modal').classList.remove('visible');
+    setTimeout(() => {
+      document.getElementById('pause-modal').classList.add('hidden');
+      engine.screens.goTo('levelSelect');
+    }, 300);
   });
+
+  // Reset Data buttons
+  const resetHandler = () => {
+    if (confirm('Apakah kamu yakin ingin mereset semua progress? Data tidak dapat dikembalikan.')) {
+      engine.audio.playClick();
+      engine.storage.resetAll();
+      window.location.reload();
+    }
+  };
+  document.getElementById('btn-reset-data')?.addEventListener('click', resetHandler);
+  document.getElementById('btn-reset-data-victory')?.addEventListener('click', resetHandler);
 
   // Home button (HUD)
   document.getElementById('btn-home')?.addEventListener('click', () => {
