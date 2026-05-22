@@ -282,6 +282,31 @@ export class JigsawPuzzle extends BasePuzzle {
     }
   }
 
+  showHint() {
+    super.showHint();
+    if (this.isSolved) return;
+    
+    // Find first unplaced piece
+    const p = this.pieces.find(p => !p.isPlaced);
+    if (!p) return;
+    
+    const targetSlot = this.slots.find(s => s.id === p.id);
+    if (!targetSlot) return;
+    
+    // Animate piece
+    this.engine.animation.sequence(p, [
+      { to: { animScale: 1.2 }, options: { duration: 200 } },
+      { to: { animScale: 1.0 }, options: { duration: 200 } },
+      { to: { animScale: 1.2 }, options: { duration: 200 } },
+      { to: { animScale: 1.0 }, options: { duration: 200 } }
+    ]);
+    
+    // Create some sparkle particles at the target slot
+    const tx = targetSlot.x + this.pieceWidth / 2;
+    const ty = targetSlot.y + this.pieceHeight / 2;
+    this.engine.particles.sparkle(tx, ty, 5);
+  }
+
   checkWinCondition() {
     return this.pieces.every(p => p.isPlaced);
   }

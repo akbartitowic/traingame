@@ -419,6 +419,7 @@ function createGameScreen() {
           return;
       }
       
+      engine.activePuzzle = activePuzzle;
       activePuzzle.init();
       engine.audio.playLevelStart();
     },
@@ -430,6 +431,7 @@ function createGameScreen() {
       if (activePuzzle) {
         activePuzzle.destroy();
         activePuzzle = null;
+        engine.activePuzzle = null;
       }
     },
 
@@ -642,8 +644,14 @@ function setupUIHandlers() {
 
   // Hint button
   document.getElementById('btn-hint')?.addEventListener('click', () => {
-    engine.audio.playClick();
-    // Will be implemented in Phase 3
+    engine.audio.playHint();
+    // We need a way to access activePuzzle from here.
+    // It is scoped inside createGameScreen().
+    // So instead of handling it here, let's fire an event or let GameScreen handle it.
+    // Or we can just access engine.state.activePuzzle if we store it there.
+    if (engine.activePuzzle) {
+      engine.activePuzzle.showHint();
+    }
   });
 
   // Sound toggle
