@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Choo-Choo Puzzle Adventure — Game puzzle kereta yang seru untuk anak-anak! Susun puzzle, bangun rel, dan arahkan kereta ke stasiun!">
+  <meta name="theme-color" content="#E53935">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Choo-Choo">
+
+  <title>Choo-Choo Puzzle Adventure 🚂</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/index.css">
+  <link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div id="loading-screen" class="screen active">
+    <div class="loading-content">
+      <img src="assets/images/title_logo.png" alt="Choo-Choo Puzzle Adventure" class="loading-logo" width="320" height="200">
+      <div class="loading-bar-container">
+        <div class="loading-bar" id="loading-bar"></div>
+      </div>
+      <p class="loading-text" id="loading-text">Memuat permainan...</p>
+    </div>
+  </div>
+
+  <!-- Game Container -->
+  <div id="game-container">
+    <!-- Canvas Layer (game rendering) -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- UI Overlay Layer (DOM-based UI on top of canvas) -->
+    <div id="ui-overlay">
+      <!-- Top Bar (HUD) -->
+      <div id="hud" class="hud hidden">
+        <button id="btn-home" class="btn-icon" aria-label="Kembali ke menu">
+          <span class="btn-icon-emoji">🏠</span>
+        </button>
+        <div id="level-info" class="level-badge">
+          <span id="level-number">1</span>
+        </div>
+        <div id="move-counter" class="hud-stat">
+          <span class="hud-stat-icon">👆</span>
+          <span id="move-count">0</span>
+        </div>
+        <div id="star-display" class="hud-stat">
+          <span id="stars">⭐⭐⭐</span>
+        </div>
+        <button id="btn-hint" class="btn-icon" aria-label="Petunjuk">
+          <span class="btn-icon-emoji">💡</span>
+        </button>
+        <button id="btn-pause" class="btn-icon" aria-label="Jeda">
+          <span class="btn-icon-emoji">⏸️</span>
+        </button>
+      </div>
+
+      <!-- Pause Modal -->
+      <div id="pause-modal" class="modal hidden">
+        <div class="modal-content">
+          <h2 class="modal-title">⏸️ Jeda</h2>
+          <button id="btn-resume" class="btn-primary" aria-label="Lanjutkan">▶️ Lanjut Main</button>
+          <button id="btn-restart" class="btn-secondary" aria-label="Ulangi level">🔄 Ulangi</button>
+          <button id="btn-quit" class="btn-secondary" aria-label="Keluar ke menu">🏠 Menu Utama</button>
+          <div class="sound-controls">
+            <button id="btn-sound" class="btn-icon" aria-label="Suara">🔊</button>
+            <button id="btn-music" class="btn-icon" aria-label="Musik">🎵</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Victory Modal -->
+      <div id="victory-modal" class="modal hidden">
+        <div class="modal-content victory-content">
+          <h2 class="victory-title" id="victory-text">🎉 HEBAT! 🎉</h2>
+          <div class="victory-stars" id="victory-stars">
+            <span class="victory-star">⭐</span>
+            <span class="victory-star">⭐</span>
+            <span class="victory-star">⭐</span>
+          </div>
+          <p class="victory-message" id="victory-message">Kamu berhasil!</p>
+          <button id="btn-next-level" class="btn-primary btn-large" aria-label="Level selanjutnya">
+            ➡️ Level Berikutnya
+          </button>
+          <button id="btn-replay" class="btn-secondary" aria-label="Main lagi">🔄 Main Lagi</button>
+          <button id="btn-levels" class="btn-secondary" aria-label="Pilih level">🗺️ Pilih Level</button>
+        </div>
+      </div>
+
+      <!-- Install PWA Banner -->
+      <div id="install-banner" class="install-banner hidden">
+        <p>📲 Pasang game ini di HP kamu!</p>
+        <button id="btn-install" class="btn-install" aria-label="Pasang game">Pasang</button>
+        <button id="btn-dismiss-install" class="btn-dismiss" aria-label="Tutup">✕</button>
+      </div>
+
+      <!-- Offline Toast -->
+      <div id="offline-toast" class="toast hidden">
+        ✅ Siap bermain offline!
+      </div>
+    </div>
+  </div>
+
+  <!-- App Entry Point -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
