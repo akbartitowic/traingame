@@ -1,8 +1,27 @@
 /**
- * AudioManager — Web Audio API based sound effects generator.
- * All sounds are generated programmatically — no external audio files needed.
+ * AudioManager — Hybrid audio system: loads WAV files + Web Audio API fallback.
+ * Preloads all sound assets for instant playback.
  * Supports SFX and music with independent enable/disable controls.
  */
+
+/** Sound asset definitions: name → file path */
+const SOUND_FILES = {
+  click:      'assets/audio/click.wav',
+  snap:       'assets/audio/snap.wav',
+  success:    'assets/audio/success.wav',
+  error:      'assets/audio/error.wav',
+  whistle:    'assets/audio/whistle.wav',
+  fanfare:    'assets/audio/fanfare.wav',
+  star:       'assets/audio/star.wav',
+  button:     'assets/audio/button.wav',
+  chug:       'assets/audio/chug.wav',
+  pop:        'assets/audio/pop.wav',
+  slide:      'assets/audio/slide.wav',
+  correct:    'assets/audio/correct.wav',
+  wrong:      'assets/audio/wrong.wav',
+  levelstart: 'assets/audio/levelstart.wav',
+  hint:       'assets/audio/hint.wav',
+};
 
 export class AudioManager {
   constructor() {
@@ -14,6 +33,10 @@ export class AudioManager {
     this._masterGain = null;
     this._sfxGain = null;
     this._musicGain = null;
+
+    /** @type {Map<string, AudioBuffer>} Decoded audio buffers */
+    this._buffers = new Map();
+    this._loaded = false;
   }
 
   /**
@@ -34,6 +57,11 @@ export class AudioManager {
       this._musicGain.connect(this._masterGain);
 
       this._initialized = true;
+
+      // Load audio buffers if not already loaded
+      if (!this._loaded) {
+        this._loadAllSounds();
+      }
     } catch (err) {
       console.warn('[AudioManager] Web Audio not available:', err);
     }
@@ -48,77 +76,123 @@ export class AudioManager {
     }
   }
 
-  /** Play a short click/snap sound — for piece placement. */
-  playClick() {
-    if (!this._canPlay()) return;
-    this._playTone(800, 0.06, 'sine', 0.3);
+  /**
+   * Preload all sound files into AudioBuffers.
+   * @returns {Promise<void>}
+   */
+  async _loadAllSounds() {
+    if (!this.ctx) return;
+
+    const entries = Object.entries(SOUND_FILES);
+    const promises = entries.map(async ([name, path]) => {
+      try {
+        const response = await fetch(path);
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
+        this._buffers.set(name, audioBuffer);
+      } catch (err) {
+        console.warn(`[AudioManager] Failed to load ${name}:`, err);
+      }
+    });
+
+    await Promise.all(promises);
+    this._loaded = true;
+    console.log(`[AudioManager] Loaded ${this._buffers.size}/${entries.length} sounds`);
   }
+
+  /**
+   * Preload sounds without requiring AudioContext (called during asset loading).
+   * AudioContext will be created on first user gesture.
+   * @returns {Promise<string[]>} List of sound file paths for service worker caching.
+   */
+  getSoundPaths() {
+    return Object.values(SOUND_FILES);
+  }
+
+  /**
+   * Play a loaded sound by name.
+   * @param {string} name - Sound name (key from SOUND_FILES).
+   * @param {number} [volume=1] - Volume multiplier 0-1.
+   */
+  _playBuffer(name, volume = 1) {
+    if (!this._canPlay()) return;
+
+    const buffer = this._buffers.get(name);
+    if (!buffer) {
+      // Fallback to procedural if file not loaded
+      this._playProceduralFallback(name);
+      return;
+    }
+
+    const source = this.ctx.createBufferSource();
+    const gain = this.ctx.createGain();
+    source.buffer = buffer;
+    gain.gain.value = volume;
+    source.connect(gain);
+    gain.connect(this._sfxGain);
+    source.start(0);
+  }
+
+  // ============================================================
+  // Public Play Methods
+  // ============================================================
+
+  /** Play a short click sound — for piece placement. */
+  playClick() { this._playBuffer('click'); }
+
+  /** Play a snap sound — piece snapping into grid. */
+  playSnap() { this._playBuffer('snap'); }
 
   /** Play a success chime — ascending three notes. */
-  playSuccess() {
-    if (!this._canPlay()) return;
-    const now = this.ctx.currentTime;
-    this._playToneAt(523, 0.15, 'sine', 0.25, now);        // C5
-    this._playToneAt(659, 0.15, 'sine', 0.25, now + 0.12);  // E5
-    this._playToneAt(784, 0.25, 'sine', 0.3, now + 0.24);   // G5
-  }
+  playSuccess() { this._playBuffer('success'); }
 
   /** Play an error/bonk sound — single low tone. */
-  playError() {
-    if (!this._canPlay()) return;
-    this._playTone(200, 0.15, 'triangle', 0.2);
-  }
+  playError() { this._playBuffer('error'); }
 
   /** Play a train whistle — frequency sweep. */
-  playWhistle() {
-    if (!this._canPlay()) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(900, this.ctx.currentTime + 0.3);
-    osc.frequency.linearRampToValueAtTime(700, this.ctx.currentTime + 0.6);
-    gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.8);
-    osc.connect(gain);
-    gain.connect(this._sfxGain);
-    osc.start(this.ctx.currentTime);
-    osc.stop(this.ctx.currentTime + 0.8);
-  }
+  playWhistle() { this._playBuffer('whistle'); }
 
-  /** Play a level complete fanfare — happy ascending melody. */
-  playFanfare() {
-    if (!this._canPlay()) return;
-    const now = this.ctx.currentTime;
-    const notes = [523, 587, 659, 784, 880, 1047]; // C5 to C6
-    notes.forEach((freq, i) => {
-      this._playToneAt(freq, 0.12, 'sine', 0.2, now + i * 0.1);
-    });
-    // Final sustained note
-    this._playToneAt(1047, 0.5, 'sine', 0.3, now + 0.6);
-  }
+  /** Play a level complete fanfare. */
+  playFanfare() { this._playBuffer('fanfare'); }
 
   /** Play a star earning sound. */
-  playStar() {
-    if (!this._canPlay()) return;
-    const now = this.ctx.currentTime;
-    this._playToneAt(1047, 0.1, 'sine', 0.2, now);
-    this._playToneAt(1319, 0.2, 'sine', 0.25, now + 0.08);
-  }
+  playStar() { this._playBuffer('star'); }
 
   /** Play a button press sound. */
-  playButton() {
-    if (!this._canPlay()) return;
-    this._playTone(440, 0.05, 'sine', 0.15);
-  }
+  playButton() { this._playBuffer('button'); }
 
-  /** Toggle sound effects. */
+  /** Play a train chugging sound. */
+  playChug() { this._playBuffer('chug'); }
+
+  /** Play a pop sound — UI element appearing. */
+  playPop() { this._playBuffer('pop'); }
+
+  /** Play a sliding sound — piece being dragged. */
+  playSlide() { this._playBuffer('slide'); }
+
+  /** Play a correct match sound. */
+  playCorrect() { this._playBuffer('correct'); }
+
+  /** Play a wrong/gentle buzz sound. */
+  playWrong() { this._playBuffer('wrong'); }
+
+  /** Play a level start jingle. */
+  playLevelStart() { this._playBuffer('levelstart'); }
+
+  /** Play a hint notification. */
+  playHint() { this._playBuffer('hint'); }
+
+  // ============================================================
+  // Toggle Controls
+  // ============================================================
+
+  /** Toggle sound effects on/off. @returns {boolean} New state. */
   toggleSound() {
     this.soundEnabled = !this.soundEnabled;
     return this.soundEnabled;
   }
 
-  /** Toggle music. */
+  /** Toggle music on/off. @returns {boolean} New state. */
   toggleMusic() {
     this.musicEnabled = !this.musicEnabled;
     if (this._musicGain) {
@@ -139,31 +213,66 @@ export class AudioManager {
     }
   }
 
+  // ============================================================
+  // Internal
+  // ============================================================
+
   /** @private Check if we can play sounds. */
   _canPlay() {
     return this._initialized && this.soundEnabled && this.ctx;
   }
 
   /**
-   * @private Play a single tone immediately.
-   * @param {number} freq - Frequency in Hz.
-   * @param {number} dur - Duration in seconds.
-   * @param {OscillatorType} type - 'sine', 'triangle', 'square', 'sawtooth'.
-   * @param {number} vol - Volume 0-1.
+   * @private Procedural fallback when WAV file isn't loaded yet.
+   * @param {string} name - Sound name.
    */
-  _playTone(freq, dur, type, vol) {
-    this._playToneAt(freq, dur, type, vol, this.ctx.currentTime);
+  _playProceduralFallback(name) {
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+
+    switch (name) {
+      case 'click':
+      case 'snap':
+        this._tone(800, 0.06, 'sine', 0.3, now);
+        break;
+      case 'success':
+      case 'correct':
+        this._tone(523, 0.15, 'sine', 0.25, now);
+        this._tone(659, 0.15, 'sine', 0.25, now + 0.12);
+        this._tone(784, 0.25, 'sine', 0.3, now + 0.24);
+        break;
+      case 'error':
+      case 'wrong':
+        this._tone(200, 0.15, 'triangle', 0.2, now);
+        break;
+      case 'button':
+      case 'pop':
+        this._tone(440, 0.05, 'sine', 0.15, now);
+        break;
+      case 'star':
+        this._tone(1047, 0.1, 'sine', 0.2, now);
+        this._tone(1319, 0.2, 'sine', 0.25, now + 0.08);
+        break;
+      case 'fanfare':
+      case 'levelstart':
+        [523, 587, 659, 784, 880, 1047].forEach((f, i) => {
+          this._tone(f, 0.12, 'sine', 0.2, now + i * 0.1);
+        });
+        break;
+      case 'whistle':
+      case 'hint':
+        this._tone(800, 0.3, 'sine', 0.2, now);
+        break;
+      default:
+        this._tone(440, 0.1, 'sine', 0.15, now);
+    }
   }
 
   /**
-   * @private Play a single tone at a specific time.
-   * @param {number} freq
-   * @param {number} dur
-   * @param {OscillatorType} type
-   * @param {number} vol
-   * @param {number} startTime
+   * @private Play a single procedural tone.
    */
-  _playToneAt(freq, dur, type, vol, startTime) {
+  _tone(freq, dur, type, vol, startTime) {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = type;

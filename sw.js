@@ -3,7 +3,7 @@
  * Caches all assets for offline play. No server needed.
  */
 
-const CACHE_NAME = 'choo-choo-v1';
+const CACHE_NAME = 'choo-choo-v2';
 
 /** All files to cache for offline play. */
 const ASSETS_TO_CACHE = [
@@ -31,6 +31,22 @@ const ASSETS_TO_CACHE = [
   '/assets/images/game_characters.png',
   '/assets/images/title_logo.png',
   '/assets/images/scenery_elements.png',
+  // Audio assets
+  '/assets/audio/click.wav',
+  '/assets/audio/snap.wav',
+  '/assets/audio/success.wav',
+  '/assets/audio/error.wav',
+  '/assets/audio/whistle.wav',
+  '/assets/audio/fanfare.wav',
+  '/assets/audio/star.wav',
+  '/assets/audio/button.wav',
+  '/assets/audio/chug.wav',
+  '/assets/audio/pop.wav',
+  '/assets/audio/slide.wav',
+  '/assets/audio/correct.wav',
+  '/assets/audio/wrong.wav',
+  '/assets/audio/levelstart.wav',
+  '/assets/audio/hint.wav',
 ];
 
 /**
