@@ -6,6 +6,14 @@
 import { GameEngine, GAME_WIDTH, GAME_HEIGHT } from './engine/GameEngine.js';
 import { Easing } from './engine/AnimationSystem.js';
 import { InputManager } from './engine/InputManager.js';
+import { LEVELS } from './levels.js';
+
+// Import Puzzle Mechanics
+import { JigsawPuzzle } from './puzzles/JigsawPuzzle.js';
+import { OrderingPuzzle } from './puzzles/OrderingPuzzle.js';
+import { TrackBuilder } from './puzzles/TrackBuilder.js';
+import { MatchingPuzzle } from './puzzles/MatchingPuzzle.js';
+import { PathChooser } from './puzzles/PathChooser.js';
 
 /** @type {GameEngine} */
 const engine = new GameEngine();
@@ -366,16 +374,18 @@ function createLevelSelectScreen() {
 }
 
 /**
- * Game Screen — Placeholder that will host puzzle mechanics in Phase 3.
+ * Game Screen — Hosts and manages the active puzzle logic.
  */
 function createGameScreen() {
   let levelId = 1;
+  let activePuzzle = null;
 
   return {
     id: 'game',
 
     enter(data) {
       levelId = data?.level || 1;
+      const config = LEVELS.find(l => l.id === levelId) || LEVELS[0];
 
       // Show HUD
       const hud = document.getElementById('hud');
@@ -386,14 +396,52 @@ function createGameScreen() {
 
       const moveCount = document.getElementById('move-count');
       if (moveCount) moveCount.textContent = '0';
+
+      // Initialize the appropriate puzzle mechanic
+      switch(config.type) {
+        case 'jigsaw':
+          activePuzzle = new JigsawPuzzle(engine, config);
+          break;
+        case 'ordering':
+          activePuzzle = new OrderingPuzzle(engine, config);
+          break;
+        case 'trackBuilder':
+          activePuzzle = new TrackBuilder(engine, config);
+          break;
+        case 'matching':
+          activePuzzle = new MatchingPuzzle(engine, config);
+          break;
+        case 'pathChooser':
+          activePuzzle = new PathChooser(engine, config);
+          break;
+        default:
+          console.warn('Unknown puzzle type:', config.type);
+          return;
+      }
+      
+      activePuzzle.init();
+      engine.audio.playLevelStart();
     },
 
     exit() {
       const hud = document.getElementById('hud');
       if (hud) hud.classList.add('hidden');
+      
+      if (activePuzzle) {
+        activePuzzle.destroy();
+        activePuzzle = null;
+      }
     },
 
-    update(dt) {},
+    update(dt) {
+      if (activePuzzle) {
+        activePuzzle.update(dt);
+        
+        // Update move counter in HUD
+        const moveCount = document.getElementById('move-count');
+        if (moveCount) moveCount.textContent = activePuzzle.moves;
+      }
+    },
 
     render(ctx) {
       // Background
@@ -403,41 +451,17 @@ function createGameScreen() {
         ctx.drawImage(bgImg, 0, 0, GAME_WIDTH, GAME_HEIGHT);
         ctx.globalAlpha = 1;
       }
-
-      // Placeholder text
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      ctx.fillRect(GAME_WIDTH / 2 - 200, GAME_HEIGHT / 2 - 60, 400, 120);
-      ctx.strokeStyle = '#2196F3';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(GAME_WIDTH / 2 - 200, GAME_HEIGHT / 2 - 60, 400, 120);
-
-      ctx.fillStyle = '#4A148C';
-      ctx.font = `bold 28px 'Fredoka One', cursive`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(`🚂 Level ${levelId}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20);
-
-      ctx.fillStyle = '#666';
-      ctx.font = `18px 'Nunito', sans-serif`;
-      ctx.fillText('Puzzle akan dibuat di Phase 3', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 20);
-
-      // Tap to complete (temp)
-      ctx.fillStyle = '#999';
-      ctx.font = `14px 'Nunito', sans-serif`;
-      ctx.fillText('Tap untuk simulasi selesai level', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 50);
-
-      ctx.textAlign = 'start';
+      
+      // Render active puzzle
+      if (activePuzzle) {
+        activePuzzle.render(ctx);
+      }
     },
 
     handleInput(event) {
-      if (event.type !== 'tap') return;
-
-      // Temp: tap anywhere to simulate level completion
-      const result = { stars: 3, moves: 5, time: 30, hintsUsed: 0 };
-      engine.completeLevel(levelId, result);
-      engine.audio.playFanfare();
-      engine.particles.celebrate(GAME_WIDTH, GAME_HEIGHT);
-      engine.screens.goTo('victory', { level: levelId, result });
+      if (activePuzzle) {
+        activePuzzle.handleInput(event);
+      }
     },
   };
 }

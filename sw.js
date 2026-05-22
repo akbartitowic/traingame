@@ -3,7 +3,7 @@
  * Caches all assets for offline play. No server needed.
  */
 
-const CACHE_NAME = 'choo-choo-v2';
+const CACHE_NAME = 'choo-choo-v3';
 
 /** All files to cache for offline play. */
 const ASSETS_TO_CACHE = [
@@ -20,6 +20,13 @@ const ASSETS_TO_CACHE = [
   '/js/engine/ParticleSystem.js',
   '/js/engine/StorageManager.js',
   '/js/engine/AudioManager.js',
+  '/js/engine/BasePuzzle.js',
+  '/js/levels.js',
+  '/js/puzzles/JigsawPuzzle.js',
+  '/js/puzzles/OrderingPuzzle.js',
+  '/js/puzzles/TrackBuilder.js',
+  '/js/puzzles/MatchingPuzzle.js',
+  '/js/puzzles/PathChooser.js',
   '/assets/images/train_engine.png',
   '/assets/images/train_tracks.png',
   '/assets/images/game_background.png',
