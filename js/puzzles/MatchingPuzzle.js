@@ -231,7 +231,7 @@ export class MatchingPuzzle extends BasePuzzle {
         }
       }
     } 
-    else if (event.type === 'move' && event.isDragging && this.draggedCargo) {
+    else if (event.type === 'drag' && this.draggedCargo) {
       this.draggedCargo.x = event.x - this.dragOffsetX;
       this.draggedCargo.y = event.y - this.dragOffsetY;
     } 

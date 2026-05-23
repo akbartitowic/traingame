@@ -542,7 +542,7 @@ function createVictoryScreen() {
 async function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     try {
-      const reg = await navigator.serviceWorker.register('/sw.js');
+      const reg = await navigator.serviceWorker.register('sw.js');
       console.log('[PWA] Service worker registered:', reg.scope);
 
       reg.addEventListener('updatefound', () => {

@@ -25,7 +25,8 @@ export class PathChooser extends BasePuzzle {
         x: 150 + i * this.pathLength,
         y: GAME_HEIGHT / 2,
         state: 0, // 0 = straight/up, 1 = diverge/down
-        radius: 40
+        radius: 40,
+        passed: false
       });
     }
     
@@ -54,7 +55,8 @@ export class PathChooser extends BasePuzzle {
     // Check collision with switches
     for (let i = 0; i < this.switches.length; i++) {
       const sw = this.switches[i];
-      if (this.train.x > sw.x - 10 && this.train.x < sw.x + 10) {
+      if (!sw.passed && this.train.x >= sw.x) {
+        sw.passed = true;
         // Train just passed a switch, check if it's correct
         if (sw.state !== this.correctPath[i]) {
           // WRONG PATH
@@ -69,9 +71,10 @@ export class PathChooser extends BasePuzzle {
           ]);
           
           setTimeout(() => {
-            // Reset train
+            // Reset train and switches
             this.train.x = 50;
             this.train.y = GAME_HEIGHT / 2;
+            this.switches.forEach(s => s.passed = false);
             this.train.active = true;
             this.moves++; // Count a fail as a move
           }, 1000);

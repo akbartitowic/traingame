@@ -213,7 +213,7 @@ export class TrackBuilder extends BasePuzzle {
         }
       }
     } 
-    else if (event.type === 'move' && event.isDragging && this.draggedPiece) {
+    else if (event.type === 'drag' && this.draggedPiece) {
       this.draggedPiece.x = event.x - this.dragOffsetX;
       this.draggedPiece.y = event.y - this.dragOffsetY;
     } 

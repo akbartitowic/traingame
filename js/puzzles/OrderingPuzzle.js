@@ -235,7 +235,7 @@ export class OrderingPuzzle extends BasePuzzle {
         }
       }
     } 
-    else if (event.type === 'move' && event.isDragging && this.draggedWagon) {
+    else if (event.type === 'drag' && this.draggedWagon) {
       this.draggedWagon.x = event.x - this.dragOffsetX;
       this.draggedWagon.y = event.y - this.dragOffsetY;
     } 
